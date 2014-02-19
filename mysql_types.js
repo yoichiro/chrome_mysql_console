@@ -94,6 +94,17 @@ MySQLTypes.prototype = {
         var result = binaryUtils.arrayBufferToString(targetBuffer.buffer);
         return result;
     },
+    getAsciiLengthEncodedString: function(buffer, offset) {
+        var lengthResult = this.getLengthEncodedInteger(buffer, offset);
+        if (lengthResult.result == null) {
+            return {result: null, nextPosition: lengthResult.nextPosition};
+        } else {
+            var result = this.getAsciiFixedLengthString(
+                buffer, lengthResult.nextPosition, lengthResult.result);
+            return {result: result,
+                    nextPosition: lengthResult.nextPosition + result.length};
+        }
+    },
     getFixedLengthInteger: function(buffer, offset, length) {
         var source = new Uint8Array(buffer);
         var subarray = source.subarray(offset, offset + length);
@@ -126,7 +137,8 @@ MySQLTypes.prototype = {
             resultArray[i] = subarray[i];
         }
         var resultView = new DataView(resultBuffer);
-        return resultView.getInt32(0, true); // Currently 64bit not supported
+        var result = resultView.getInt32(0, true); // Currently 64bit not supported
+        return {result: result, nextPosition: offset + 1 + length};
     }
 };
 

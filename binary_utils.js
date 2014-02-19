@@ -14,6 +14,10 @@ BinaryUtils.prototype = {
             bufView[i] = str.charCodeAt(i);
         }
         return buf;
+    },
+    createUnit8Array: function(length) {
+        var buffer = new ArrayBuffer(length);
+        return new Uint8Array(buffer);
     }
 };
 

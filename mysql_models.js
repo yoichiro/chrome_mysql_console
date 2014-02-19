@@ -104,3 +104,50 @@ ErrResult.prototype = {
         return false;
     }
 };
+
+var ColumnDefinition = function(
+    catalog, schema, table, orgTable, name, orgName, nextLength,
+    characterSet, columnLength, columnType, flags, decimals) {
+    this.constructor(catalog, schema, table, orgTable, name, orgName, nextLength,
+                     characterSet, columnLength, columnType, flags, decimals);
+};
+
+ColumnDefinition.prototype = {
+    constructor: function(newCatalog, newSchema, newTable, newOrgtable, newName, newOrgname,
+                          newNextlength, newCharacterset, newColumnlength, newColumntype,
+                          newFlags, newDecimals) {
+        this.catalog = newCatalog;
+        this.schema = newSchema;
+        this.table = newTable;
+        this.orgTable = newOrgtable;
+        this.name = newName;
+        this.orgName = newOrgname;
+        this.nextLength = newNextlength;
+        this.characterSet = newCharacterset;
+        this.columnLength = newColumnlength;
+        this.columnType = newColumntype;
+        this.flags = newFlags;
+        this.decimals = newDecimals;
+    }
+};
+
+var EofResult = function(warningCount, statusFlags) {
+    this.constructor(warningCount, statusFlags);
+};
+
+EofResult.prototype = {
+    constructor: function(newWarningCount, newStatusFlags) {
+        this.warningCount = newWarningCount;
+        this.statusFlags = newStatusFlags;
+    }
+};
+
+var ResultsetRow = function(values) {
+    this.constructor(values);
+};
+
+ResultsetRow.prototype = {
+    constructor: function(newValues) {
+        this.values = newValues;
+    }
+};
