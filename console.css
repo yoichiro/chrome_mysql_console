@@ -1,0 +1,38 @@
+.outputPanel {
+    width: 100%;
+    height: 540px;
+    margin-bottom: 2px;
+    background-color: black;
+    padding: 4px;
+    overflow: scroll;
+    -webkit-user-select: text;
+}
+
+.outputPanel pre {
+    width: 775px;
+    word-wrap: break-word;
+    color: white;
+    font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+    font-size: 16px;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.inputPanel {
+    width: 100%;
+    height: 35px;
+    padding: 1px;
+}
+
+#query {
+    height: 28px;
+    width: 700px;
+    font-size: 18px;
+}
+
+#executeQuery {
+    margin: 0;
+    padding: 0;
+    height: 30px;
+    width: 70px;
+}

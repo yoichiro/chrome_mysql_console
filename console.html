@@ -14,22 +14,19 @@
   <script type="text/javascript" src="mysql_protocol.js"></script>
   <script type="text/javascript" src="mysql_communication.js"></script>
   <script type="text/javascript" src="mysql_client.js"></script>
-  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="console.js"></script>
+  <link rel="stylesheet" type="text/css" href="console.css" />
 </head>
 
 <body>
-  <button id="btnConnect">Create, Connect</button>
-  <button id="btnDestroy">Disconnect, Destroy</button>
-  <button id="btnRead">Read 1 byte</button>
-  <button id="btnReadPacket">Read packet</button>
-  <button id="btnInitialHandshake">Initial Handshake</button>
-  <button id="btnLogin">Login</button>
-  <button id="btnLogout">Logout</button>
-  <input id="query" type="text" value="select * from page_histories" />
-  <button id="btnQuery">Query</button>
-  <button id="btnDatabases">Databases</button>
-  <select id="databases"></select>
-  <button id="btnInitDB">InitDB</button>
+  <div class="outputPanel">
+    <pre>Ready&gt;</pre>
+  </div>
+
+  <div class="inputPanel">
+    <input type="text" id="query" value="connect 127.0.0.1 3306 yoichiro pass" />
+    <button id="executeQuery">Execute</button>
+  </div>
 </body>
 
 </html>

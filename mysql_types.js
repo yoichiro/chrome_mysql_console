@@ -102,7 +102,7 @@ MySQLTypes.prototype = {
             var result = this.getAsciiFixedLengthString(
                 buffer, lengthResult.nextPosition, lengthResult.result);
             return {result: result,
-                    nextPosition: lengthResult.nextPosition + result.length};
+                    nextPosition: lengthResult.nextPosition + lengthResult.result};
         }
     },
     getFixedLengthInteger: function(buffer, offset, length) {

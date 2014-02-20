@@ -12,6 +12,15 @@ MySQLProtocol.prototype = {
         array.set(view, 1);
         return array;
     },
+    generateInitDBRequest: function(schemaName) {
+        var schemaNameBuffer = binaryUtils.stringToArrayBuffer(schemaName);
+        var schemaNameArray = new Uint8Array(schemaNameBuffer);
+        var resultBuffer = new ArrayBuffer(1 + schemaNameArray.length);
+        var resultArray = new Uint8Array(resultBuffer);
+        resultArray[0] = 0x02;
+        resultArray.set(schemaNameArray, 1);
+        return resultArray;
+    },
     generateHandshakeResponse: function(
         initialHandshakeRequest, username, passwordHash) {
         var capabilityFlagsValue =
@@ -78,43 +87,30 @@ MySQLProtocol.prototype = {
         }
         return result;
     },
-    parseQueryResultPacket: function(packet, successCallback, errorCallback) {
+    parseQueryResultPacket: function(packet, callback) {
         var data = packet.data;
         var header = mySQLTypes.getFixedLengthInteger(data, 0, 1);
-        if (header == 0xFF) {
+        if (header == 0) {
+            // No result set
+            var okResult = this.createOkResult(data, 1, packet.dataLength);
+            callback(okResult);
+        } else if (header == 0xFF) {
             // Error
             var errResult = this.createErrResult(data, 1, packet.dataLength);
-            errorCallback(errResult);
+            callback(errResult);
         } else {
+            // Result set exists
             var columnCountResult = mySQLTypes.getLengthEncodedInteger(data, 0);
-            successCallback(columnCountResult.result);
+            var queryResult = new QueryResult(columnCountResult.result);
+            callback(queryResult);
         }
     },
-    parseHandshakeResultPacket: function(packet) {
+    parseOkErrResultPacket: function(packet) {
         var data = packet.data;
         var header = mySQLTypes.getFixedLengthInteger(data, 0, 1);
         if (header == 0) {
             // Succeeded
-            var affectedRowsResult = mySQLTypes.getLengthEncodedInteger(data, 1);
-            var affectedRows = affectedRowsResult.result;
-            var lastInsertIdResult =
-                    mySQLTypes.getLengthEncodedInteger(
-                        data, affectedRowsResult.nextPosition);
-            var lastInsertId = lastInsertIdResult.result;
-            var statusFlags =
-                    mySQLTypes.getFixedLengthInteger(
-                        data, lastInsertIdResult.nextPosition, 2);
-            var warnings =
-                    mySQLTypes.getFixedLengthInteger(
-                        data, lastInsertIdResult.nextPosition + 2, 2);
-            var info = "";
-            if (packet.dataLength > lastInsertIdResult.nextPosition + 4) {
-                var length = packet.dataLength - lastInsertIdResult.nextPosition + 4;
-                info = mySQLTypes.getAsciiFixedLengthString(
-                    data, lastInsertIdResult.nextPosition + 4, length);
-            }
-            return new OkResult(
-                affectedRows, lastInsertId, statusFlags, warnings, info);
+            return this.createOkResult(data, 1, packet.dataLength);
         } else if (header == 0xFF) {
             // Error
             return this.createErrResult(data, 1, packet.dataLength);
@@ -122,6 +118,28 @@ MySQLProtocol.prototype = {
             // TODO: Unknown
             return null;
         }
+    },
+    createOkResult: function(data, offset, dataLength) {
+        var affectedRowsResult = mySQLTypes.getLengthEncodedInteger(data, offset);
+        var affectedRows = affectedRowsResult.result;
+        var lastInsertIdResult =
+                mySQLTypes.getLengthEncodedInteger(
+                    data, affectedRowsResult.nextPosition);
+        var lastInsertId = lastInsertIdResult.result;
+        var statusFlags =
+                mySQLTypes.getFixedLengthInteger(
+                    data, lastInsertIdResult.nextPosition, 2);
+        var warnings =
+                mySQLTypes.getFixedLengthInteger(
+                    data, lastInsertIdResult.nextPosition + 2, 2);
+        var info = "";
+        if (dataLength > lastInsertIdResult.nextPosition + 4) {
+            var length = dataLength - lastInsertIdResult.nextPosition + 4;
+            info = mySQLTypes.getAsciiFixedLengthString(
+                data, lastInsertIdResult.nextPosition + 4, length);
+        }
+        return new OkResult(
+            affectedRows, lastInsertId, statusFlags, warnings, info);
     },
     createErrResult: function(data, offset, dataLength) {
         var errorCode = mySQLTypes.getFixedLengthInteger(data, offset, 2);

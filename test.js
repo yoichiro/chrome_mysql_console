@@ -22,6 +22,7 @@ Test.prototype = {
         $("#btnLogout").click(this.onClickLogout.bind(this));
         $("#btnQuery").click(this.onClickQuery.bind(this));
         $("#btnDatabases").click(this.onClickDatabases.bind(this));
+        $("#btnInitDB").click(this.onClickInitDB.bind(this));
     },
     onClickConnect: function(evt) {
         console.log("Test#onClickConnect() called.");
@@ -60,6 +61,8 @@ Test.prototype = {
         console.log("Test#onClickLogin() called.");
         mySQLClient.login("127.0.0.1", 3306, "yoichiro", "pass", function(result) {
             console.log(result);
+        }.bind(this), function(errorCode) {
+            console.log(errorCode);
         }.bind(this));
     },
     onClickLogout: function(evt) {
@@ -74,12 +77,29 @@ Test.prototype = {
         mySQLClient.query(query, function(columnDefinitions, resultsetRows) {
             console.log(columnDefinitions);
             console.log(resultsetRows);
+        }.bind(this), function(result) {
+            console.log(result);
+        }.bind(this), function(result) {
+            console.log(result);
         }.bind(this));
     },
     onClickDatabases: function(evt) {
         console.log("Test#onClickDatabases() called.");
         mySQLClient.getDatabases(function(databases) {
             console.log(databases);
+            $("#databases").html("");
+            for (var i = 0; i < databases.length; i++) {
+                $("#databases").append('<option value="' + databases[i] + '">' + databases[i] + "</option>");
+            }
+        }.bind(this), function(result) {
+            console.log(result);
+        }.bind(this));
+    },
+    onClickInitDB: function(evt) {
+        console.log("Test#onClickInitDB() called.");
+        var schemaName = $("#databases").val();
+        mySQLClient.initDB(schemaName, function(result) {
+            console.log(result);
         }.bind(this));
     },
     output: function(array) {

@@ -71,6 +71,7 @@ InitialHandshakeRequest.prototype = {
     }
 };
 
+
 var OkResult = function(affectedRows, lastInsertId, statusFlags, warnings, info) {
     this.constructor(affectedRows, lastInsertId, statusFlags, warnings, info);
 };
@@ -84,6 +85,26 @@ OkResult.prototype = {
         this.info = newInfo;
     },
     isSuccess: function() {
+        return true;
+    },
+    hasResultset: function() {
+        return false;
+    }
+};
+
+
+var QueryResult = function(columnCount) {
+    this.constructor(columnCount);
+};
+
+QueryResult.prototype ={
+    constructor: function(newColumnCount) {
+        this.columnCount = newColumnCount;
+    },
+    isSuccess: function() {
+        return true;
+    },
+    hasResultset: function() {
         return true;
     }
 };
