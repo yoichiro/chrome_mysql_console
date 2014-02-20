@@ -31,57 +31,58 @@ MySQLCommunication.prototype = {
     isConnected: function() {
         return this.socketId != null;
     },
-    readPacket: function(callback) {
-        this.readFixedLongValue(3, function(dataLength) {
-            this.readFixedLongValue(1, function(sequenceNumber) {
+    readPacket: function(callback, fatalCallback) {
+        this._readFixedLongValue(3, function(dataLength) {
+            this._readFixedLongValue(1, function(sequenceNumber) {
                 this.incrementSequenceNumber(sequenceNumber);
-                this.read(dataLength, function(readInfo) {
+                this._read(dataLength, function(readInfo) {
                     var packet = new Packet(sequenceNumber, readInfo.data);
                     callback(packet);
-                }.bind(this));
-            }.bind(this));
-        }.bind(this));
+                }.bind(this), fatalCallback);
+            }.bind(this), fatalCallback);
+        }.bind(this), fatalCallback);
     },
-    readPluralPackets: function(count, callback) {
-        this._readPluralPackets(0, count, new Array(), callback);
+    readPluralPackets: function(count, callback, fatalCallback) {
+        this._readPluralPackets(0, count, new Array(), callback, fatalCallback);
     },
-    _readPluralPackets: function(current, count, result, callback) {
+    _readPluralPackets: function(current, count, result, callback, fatalCallback) {
         this.readPacket(function(packet) {
             result.push(packet);
             current += 1;
             if (current < count) {
-                this._readPluralPackets(current, count, result, callback);
+                this._readPluralPackets(
+                    current, count, result, callback, fatalCallback);
             } else {
                 callback(result);
             }
-        }.bind(this));
+        }.bind(this), fatalCallback);
     },
-    readFixedLongValue: function(length, callback) {
-        this.read(length, function(readInfo) {
+    _readFixedLongValue: function(length, callback, fatalCallback) {
+        this._read(length, function(readInfo) {
             var result = mySQLTypes.getFixedLengthInteger(readInfo.data, 0, length);
             callback(result);
-        }.bind(this));
+        }.bind(this), fatalCallback);
     },
-    read: function(length, callback) {
+    _read: function(length, callback, fatalCallback) {
         chrome.socket.read(this.socketId, length, function(readInfo) {
             var resultCode = readInfo.resultCode;
             if (resultCode > 0) {
                 callback(readInfo);
             } else {
-                // TODO: Write error process
                 console.log("Error: readInfo.resultCode=" + resultCode
                             + " data=" + readInfo.data);
+                fatalCallback("Reading packet failed: " + resultCode);
             }
         }.bind(this));
     },
-    writePacket: function(packet, callback) {
+    writePacket: function(packet, callback, errorCallback) {
         chrome.socket.write(this.socketId, packet.getArrayBuffer(), function(writeInfo) {
             var bytesWritten = writeInfo.bytesWritten;
             if (bytesWritten > 0) {
                 callback(writeInfo);
             } else {
-                // TODO: Write error process
                 console.log("Error: writeInfo.bytesWritten=" + bytesWritten);
+                errorCallback("Sending packet failed: " + bytesWritten);
             }
         }.bind(this));
     },

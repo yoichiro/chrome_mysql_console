@@ -4,10 +4,10 @@ var MySQLClient = function() {
 };
 
 MySQLClient.prototype = {
-    login: function(host, port, username, password, callback, errorCallback) {
+    login: function(host, port, username, password, callback, errorCallback, fatalCallback) {
         mySQLCommunication.connect(host, port, function(result) {
             if (result == 0) {
-                this._handshake(username, password, callback);
+                this._handshake(username, password, callback, fatalCallback);
             } else {
                 errorCallback(result);
             }
@@ -41,17 +41,17 @@ MySQLClient.prototype = {
                                 mySQLProtocol.parseEofPacket(packet);
                                 this._readResultsetRows(new Array(), function(resultsetRows) {
                                     resultsetCallback(columnDefinitions, resultsetRows);
-                                }.bind(this));
-                            }.bind(this));
-                        }.bind(this));
+                                }.bind(this), fatalCallback);
+                            }.bind(this), fatalCallback);
+                        }.bind(this), fatalCallback);
                     } else if (result.isSuccess() && !result.hasResultset()) {
                         noResultsetCallback(result);
                     } else {
                         errorCallback(result);
                     }
                 }.bind(this));
-            }.bind(this));
-        }.bind(this));
+            }.bind(this), fatalCallback);
+        }.bind(this), fatalCallback);
     },
     getDatabases: function(callback, errorCallback, fatalCallback) {
         if (!mySQLCommunication.isConnected()) {
@@ -68,7 +68,7 @@ MySQLClient.prototype = {
             console.log("This callback function never be called.");
         }.bind(this), function(result) {
             errorCallback(result);
-        }.bind(this));
+        }.bind(this), fatalCallback);
     },
     initDB: function(schemaName, callback, fatalCallback) {
         if (!mySQLCommunication.isConnected()) {
@@ -82,10 +82,10 @@ MySQLClient.prototype = {
             mySQLCommunication.readPacket(function(packet) {
                 var result = mySQLProtocol.parseOkErrResultPacket(packet);
                 callback(result);
-            }.bind(this));
-        }.bind(this));
+            }.bind(this), fatalCallback);
+        }.bind(this), fatalCallback);
     },
-    _handshake: function(username, password, callback) {
+    _handshake: function(username, password, callback, fatalCallback) {
         mySQLCommunication.readPacket(function(packet) {
             var initialHandshakeRequest =
                     mySQLProtocol.parseInitialHandshakePacket(packet);
@@ -100,11 +100,11 @@ MySQLClient.prototype = {
                 mySQLCommunication.readPacket(function(packet) {
                     var result = mySQLProtocol.parseOkErrResultPacket(packet);
                     callback(result);
-                }.bind(this));
-            }.bind(this));
-        }.bind(this));
+                }.bind(this), fatalCallback);
+            }.bind(this), fatalCallback);
+        }.bind(this), fatalCallback);
     },
-    _readResultsetRows: function(result, callback) {
+    _readResultsetRows: function(result, callback, fatalCallback) {
         mySQLCommunication.readPacket(function(packet) {
             var eofResult = mySQLProtocol.parseEofPacket(packet);
             if (eofResult) {
@@ -112,9 +112,9 @@ MySQLClient.prototype = {
             } else {
                 var row = mySQLProtocol.parseResultsetRowPacket(packet);
                 result.push(row);
-                this._readResultsetRows(result, callback);
+                this._readResultsetRows(result, callback, fatalCallback);
             }
-        }.bind(this));
+        }.bind(this), fatalCallback);
     }
 };
 

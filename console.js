@@ -46,6 +46,8 @@ Console.prototype = {
                 }
             }.bind(this), function(errorCode) {
                 this.output("Connection failed: " + errorCode, true);
+            }.bind(this), function(result) {
+                this.output("Connection failed: " + result, true);
             }.bind(this));
         }
     },
