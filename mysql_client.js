@@ -17,7 +17,12 @@ MySQLClient.prototype = {
         mySQLCommunication.disconnect(callback);
     },
     query: function(
-        queryString, resultsetCallback, noResultsetCallback, errorCallback) {
+        queryString, resultsetCallback, noResultsetCallback,
+        errorCallback, fatalCallback) {
+        if (!mySQLCommunication.isConnected()) {
+            fatalCallback("Not connected.");
+            return;
+        }
         mySQLCommunication.resetSequenceNumber();
         var queryRequest = mySQLProtocol.generateQueryRequest(queryString);
         var queryPacket = mySQLCommunication.createPacket(queryRequest.buffer);
@@ -33,8 +38,7 @@ MySQLClient.prototype = {
                                     mySQLProtocol.parseColumnDefinitionPacket(packets[i]));
                             }
                             mySQLCommunication.readPacket(function(packet) {
-                                var eofResult = mySQLProtocol.parseEofPacket(packet);
-                                // TODO Check EofResult
+                                mySQLProtocol.parseEofPacket(packet);
                                 this._readResultsetRows(new Array(), function(resultsetRows) {
                                     resultsetCallback(columnDefinitions, resultsetRows);
                                 }.bind(this));
@@ -49,7 +53,11 @@ MySQLClient.prototype = {
             }.bind(this));
         }.bind(this));
     },
-    getDatabases: function(callback, errorCallback) {
+    getDatabases: function(callback, errorCallback, fatalCallback) {
+        if (!mySQLCommunication.isConnected()) {
+            fatalCallback("Not connected.");
+            return;
+        }
         this.query("SHOW DATABASES", function(columnDefinitions, resultsetRows) {
             var databases = new Array();
             for (var i = 0; i < resultsetRows.length; i++) {
@@ -57,13 +65,16 @@ MySQLClient.prototype = {
             }
             callback(databases);
         }.bind(this), function(result) {
-            // TODO Write error process
             console.log("This callback function never be called.");
         }.bind(this), function(result) {
             errorCallback(result);
         }.bind(this));
     },
-    initDB: function(schemaName, callback) {
+    initDB: function(schemaName, callback, fatalCallback) {
+        if (!mySQLCommunication.isConnected()) {
+            fatalCallback("Not connected.");
+            return;
+        }
         mySQLCommunication.resetSequenceNumber();
         var initDBRequest = mySQLProtocol.generateInitDBRequest(schemaName);
         var initDBPacket = mySQLCommunication.createPacket(initDBRequest.buffer);

@@ -28,6 +28,9 @@ MySQLCommunication.prototype = {
             callback();
         }
     },
+    isConnected: function() {
+        return this.socketId != null;
+    },
     readPacket: function(callback) {
         this.readFixedLongValue(3, function(dataLength) {
             this.readFixedLongValue(1, function(sequenceNumber) {

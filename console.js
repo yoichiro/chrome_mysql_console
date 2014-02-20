@@ -12,18 +12,11 @@ Console.prototype = {
                 this.onEnterQuery();
             }
         }.bind(this));
-        $("#executeQuery").click(this.onClickExecuteQuery.bind(this));
     },
     start: function() {
         $("#query").focus();
     },
     onEnterQuery: function() {
-        this.executeQuery();
-    },
-    onClickExecuteQuery: function() {
-        this.executeQuery();
-    },
-    executeQuery: function() {
         var query = $("#query").val();
         $("#query").val("");
         this.output(query);
@@ -69,6 +62,9 @@ Console.prototype = {
         }.bind(this), function(result) {
             console.log(result);
             this.output("Error: Query execution failed: " + result.errorMessage, true);
+        }.bind(this), function(result) {
+            console.log(result);
+            this.output("Error: Query execution failed: " + result, true);
         }.bind(this));
     },
     outputResultset: function(columnDefinitions, resultsetRows) {
@@ -99,16 +95,16 @@ Console.prototype = {
             border += "+";
         }
         this.output(border, false);
+        var row = "|";
         for (i = 0; i < columnDefinitions.length; i++) {
-            var row = "|";
             var name = columnDefinitions[i].name;
             row += " " + name;
             for (j = 0; j < columnLengths[i] - name.length; j++) {
                 row += " ";
             }
             row += " |";
-            this.output(row, false);
         }
+        this.output(row, false);
         this.output(border, false);
         for (i = 0; i < resultsetRows.length; i++) {
             row = "|";
@@ -133,14 +129,18 @@ Console.prototype = {
         this.output(resultsetRows.length + " rows in set", true);
     },
     output: function(text, outputReady) {
-        $(".outputPanel").append("<pre>" + this.escape(text) + "</pre>");
+        var pre = document.createElement("pre");
+        pre.appendChild(document.createTextNode(text));
+        document.getElementById("outputPanel").appendChild(pre);
+        pre.scrollIntoView(false);
         if (outputReady) {
             this.ready();
         }
     },
     ready: function() {
-        $(".outputPanel").append("<br />");
-        this.output("Ready>");
+        var br = document.createElement("br");
+        document.getElementById("outputPanel").appendChild(br);
+        this.output("mysql>", false);
     },
     escape: function(text) {
         return $('<div />').text(text).html();
