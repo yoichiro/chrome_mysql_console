@@ -4,6 +4,6 @@ chrome.app.runtime.onLaunched.addListener(function() {
             width: 800,
             height: 600
         },
-        resizable: false
+        resizable: true
     });
 });

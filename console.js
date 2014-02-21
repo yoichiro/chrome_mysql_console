@@ -21,12 +21,19 @@ Console.prototype = {
                 this.historyPos = 0;
             }
         }.bind(this));
+        $(window).resize(function(evt) {
+            this.onResizeWindow();
+        }.bind(this));
     },
     start: function() {
         this.output("Welcome to Chrome MySQL Console!", false);
         this.output("First, connect to DB with the following command:", false);
         this.output("> login [host] [port] [username] [password]", true);
+        this.onResizeWindow();
         $("#query").focus();
+    },
+    onResizeWindow: function() {
+        $("#outputPanel").height($(window).height() - 35);
     },
     onEnterQuery: function() {
         var query = $("#query").val();

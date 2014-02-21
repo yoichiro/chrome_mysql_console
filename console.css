@@ -1,15 +1,21 @@
-#outputPanel {
+html, body {
     width: 100%;
-    height: 540px;
-    margin-bottom: 2px;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     background-color: black;
-    padding: 4px;
-    overflow: scroll;
+}
+
+#outputPanel {
     -webkit-user-select: text;
+    width: 100%;
+    height: calc(100% - 35px);
+    overflow-y: auto;
+    margin: 2px;
 }
 
 #outputPanel pre {
-    width: 775px;
+    width: 100%;
     word-wrap: break-word;
     color: white;
     font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
@@ -21,15 +27,11 @@
 .inputPanel {
     width: 100%;
     height: 35px;
-    padding: 0px;
+    position: relative;
 }
 
 .inputPanel #query {
-    height: 28px;
-    width: 100%;
     font-size: 18px;
-    background-color: black;
-    color: white;
-    border: 0;
+    width: 99vw;
     font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
