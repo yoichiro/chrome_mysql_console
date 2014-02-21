@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "MySQL Client",
-    "description": "Description",
-    "version": "0.0.1",
+    "name": "MySQL Console",
+    "description": "__MSG_extDescription__",
+    "version": "1.0.0",
     "app": {
         "background": {
             "scripts": ["background.js"]
@@ -11,6 +11,12 @@
     "permissions": [
         {"socket": [
             "tcp-connect:*:*"
-        ]}
-    ]
+        ]},
+        "storage"
+    ],
+    "icons": {
+        "128": "icon_128.png"
+    },
+    "offline_enabled": false,
+    "default_locale": "en"
 }

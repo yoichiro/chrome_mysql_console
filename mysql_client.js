@@ -4,54 +4,29 @@ var MySQLClient = function() {
 };
 
 MySQLClient.prototype = {
-    login: function(host, port, username, password, callback, errorCallback, fatalCallback) {
+    login: function(host, port, username, password,
+                    callback, errorCallback, fatalCallback) {
         mySQLCommunication.connect(host, port, function(result) {
-            if (result == 0) {
+            if (result >= 0) {
                 this._handshake(username, password, callback, fatalCallback);
             } else {
-                errorCallback(result);
+                errorCallback(result + "("
+                              + networkErrorCode.getErrorMessage(result) + ")");
             }
         }.bind(this));
     },
     logout: function(callback) {
         mySQLCommunication.disconnect(callback);
     },
-    query: function(
-        queryString, resultsetCallback, noResultsetCallback,
-        errorCallback, fatalCallback) {
+    query: function(queryString, resultsetCallback, noResultsetCallback,
+                    errorCallback, fatalCallback) {
         if (!mySQLCommunication.isConnected()) {
             fatalCallback("Not connected.");
             return;
         }
         mySQLCommunication.resetSequenceNumber();
-        var queryRequest = mySQLProtocol.generateQueryRequest(queryString);
-        var queryPacket = mySQLCommunication.createPacket(queryRequest.buffer);
-        mySQLCommunication.writePacket(queryPacket, function(writeInfo) {
-            mySQLCommunication.readPacket(function(packet) {
-                mySQLProtocol.parseQueryResultPacket(packet, function(result) {
-                    if (result.isSuccess() && result.hasResultset()) {
-                        var columnCount = result.columnCount;
-                        mySQLCommunication.readPluralPackets(columnCount, function(packets) {
-                            var columnDefinitions = new Array();
-                            for (var i = 0; i < packets.length; i++) {
-                                columnDefinitions.push(
-                                    mySQLProtocol.parseColumnDefinitionPacket(packets[i]));
-                            }
-                            mySQLCommunication.readPacket(function(packet) {
-                                mySQLProtocol.parseEofPacket(packet);
-                                this._readResultsetRows(new Array(), function(resultsetRows) {
-                                    resultsetCallback(columnDefinitions, resultsetRows);
-                                }.bind(this), fatalCallback);
-                            }.bind(this), fatalCallback);
-                        }.bind(this), fatalCallback);
-                    } else if (result.isSuccess() && !result.hasResultset()) {
-                        noResultsetCallback(result);
-                    } else {
-                        errorCallback(result);
-                    }
-                }.bind(this));
-            }.bind(this), fatalCallback);
-        }.bind(this), fatalCallback);
+        this._sendQueryRequest(queryString, resultsetCallback, noResultsetCallback,
+                               errorCallback, fatalCallback);
     },
     getDatabases: function(callback, errorCallback, fatalCallback) {
         if (!mySQLCommunication.isConnected()) {
@@ -90,13 +65,15 @@ MySQLClient.prototype = {
             var initialHandshakeRequest =
                     mySQLProtocol.parseInitialHandshakePacket(packet);
             var passwordHash =
-                    mySQLProtocol.generatePasswordHash(initialHandshakeRequest, password);
+                    mySQLProtocol.generatePasswordHash(
+                        initialHandshakeRequest, password);
             var handshakeResponse =
                     mySQLProtocol.generateHandshakeResponse(
                         initialHandshakeRequest, username, passwordHash);
             var handshakeResponsePacket =
                     mySQLCommunication.createPacket(handshakeResponse.buffer);
-            mySQLCommunication.writePacket(handshakeResponsePacket, function(writeInfo) {
+            mySQLCommunication.writePacket(
+                handshakeResponsePacket, function(writeInfo) {
                 mySQLCommunication.readPacket(function(packet) {
                     var result = mySQLProtocol.parseOkErrResultPacket(packet);
                     callback(result);
@@ -114,6 +91,50 @@ MySQLClient.prototype = {
                 result.push(row);
                 this._readResultsetRows(result, callback, fatalCallback);
             }
+        }.bind(this), fatalCallback);
+    },
+    _readColumnDefinitions: function(columnCount, resultsetCallback,
+                                     noResultsetCallback, errorCallback,
+                                     fatalCallback) {
+        mySQLCommunication.readPluralPackets(columnCount, function(packets) {
+            var columnDefinitions = new Array();
+            for (var i = 0; i < packets.length; i++) {
+                columnDefinitions.push(
+                    mySQLProtocol.parseColumnDefinitionPacket(
+                        packets[i]));
+            }
+            mySQLCommunication.readPacket(function(packet) {
+                mySQLProtocol.parseEofPacket(packet);
+                this._readResultsetRows(new Array(), function(resultsetRows) {
+                    resultsetCallback(columnDefinitions, resultsetRows);
+                }.bind(this), fatalCallback);
+            }.bind(this), fatalCallback);
+        }.bind(this), fatalCallback);
+    },
+    _readQueryResult: function(resultsetCallback, noResultsetCallback,
+                               errorCallback, fatalCallback) {
+        mySQLCommunication.readPacket(function(packet) {
+            mySQLProtocol.parseQueryResultPacket(packet, function(result) {
+                if (result.isSuccess() && result.hasResultset()) {
+                    var columnCount = result.columnCount;
+                    this._readColumnDefinitions(
+                        columnCount, resultsetCallback, noResultsetCallback,
+                        errorCallback, fatalCallback);
+                } else if (result.isSuccess() && !result.hasResultset()) {
+                    noResultsetCallback(result);
+                } else {
+                    errorCallback(result);
+                }
+            }.bind(this));
+        }.bind(this), fatalCallback);
+    },
+    _sendQueryRequest: function(queryString, resultsetCallback, noResultsetCallback,
+                                errorCallback, fatalCallback) {
+        var queryRequest = mySQLProtocol.generateQueryRequest(queryString);
+        var queryPacket = mySQLCommunication.createPacket(queryRequest.buffer);
+        mySQLCommunication.writePacket(queryPacket, function(writeInfo) {
+            this._readQueryResult(resultsetCallback, noResultsetCallback,
+                                  errorCallback, fatalCallback);
         }.bind(this), fatalCallback);
     }
 };

@@ -4,29 +4,85 @@ var Console = function() {
 
 Console.prototype = {
     constructor: function() {
+        this.prompt = "mysql";
         this.assignEventHandlers();
+        this.historyPos = 0;
     },
     assignEventHandlers: function() {
-        $("#query").keypress(function(evt) {
+        $("#query").keydown(function(evt) {
             if (evt.keyCode == 13) {
                 this.onEnterQuery();
+                this.historyPos = 0;
+            } else if (evt.keyCode == 38) {
+                this.showPreviousQuery();
+            } else if (evt.keyCode == 40) {
+                this.showNextQuery();
+            } else {
+                this.historyPos = 0;
             }
         }.bind(this));
     },
     start: function() {
+        this.output("Welcome to Chrome MySQL Console!", false);
+        this.output("First, connect to DB with the following command:", false);
+        this.output("> login [host] [port] [username] [password]", true);
         $("#query").focus();
     },
     onEnterQuery: function() {
         var query = $("#query").val();
         $("#query").val("");
         this.output(query);
-        if (query.match("^connect")) {
+        this.appendQueryToHistory(query);
+        if (query.match("^login")) {
             this.connect(query);
-        } else if (query.match("^disconnect")) {
+        } else if (query.match("^logout")) {
             this.disconnect();
         } else {
             this._executeQuery(query);
         }
+    },
+    appendQueryToHistory: function(query) {
+        chrome.storage.local.get("queryHistory", function(items) {
+            var queryHistory = items["queryHistory"];
+            if (!queryHistory) {
+                queryHistory = new Array();
+            }
+            if (queryHistory.indexOf(query) == -1) {
+                queryHistory.push(query);
+                if (queryHistory.length > 30) {
+                    queryHistory.splice(0, 1);
+                }
+            }
+            chrome.storage.local.set({queryHistory: queryHistory}, function() {
+                this.historyPos = 0;
+            }.bind(this));
+        }.bind(this));
+    },
+    showPreviousQuery: function() {
+        chrome.storage.local.get("queryHistory", function(items) {
+            var queryHistory = items["queryHistory"];
+            if (queryHistory) {
+                if (this.historyPos + 1 <= queryHistory.length) {
+                    this.historyPos += 1;
+                }
+                var pos = queryHistory.length - this.historyPos;
+                $("#query").val(queryHistory[pos]);
+                $("#query").select();
+            }
+        }.bind(this));
+    },
+    showNextQuery: function() {
+        chrome.storage.local.get("queryHistory", function(items) {
+            var queryHistory = items["queryHistory"];
+            if (queryHistory) {
+                if (this.historyPos > 0) {
+                    this.historyPos -= 1;
+                }
+                var pos = queryHistory.length - this.historyPos;
+                $("#query").val(queryHistory[pos]);
+                $("#query").select();
+            }
+        }.bind(this));
     },
     connect: function(query) {
         var split = query.split(" ");
@@ -37,10 +93,12 @@ Console.prototype = {
             var port = split[2];
             var username = split[3];
             var password = split[4];
-            this.output("Connecting... host=" + host + " port=" + port, false);
             mySQLClient.login(host, Number(port), username, password, function(result) {
                 if (result.isSuccess()) {
-                    this.output("Connected.", true);
+                    this.prompt = host + ":" + port;
+                    this.output("Connected.", false);
+                    this.output("If you want to disconnect from DB, then type the following command.", false);
+                    this.output("> logout", true);
                 } else {
                     this.output("MySQL sent this error: " + result.errorMessage, true);
                 }
@@ -53,6 +111,7 @@ Console.prototype = {
     },
     disconnect: function() {
         mySQLClient.logout(function(result) {
+            this.prompt = "mysql";
             this.output("Disconnected.", true);
         }.bind(this));
     },
@@ -142,7 +201,7 @@ Console.prototype = {
     ready: function() {
         var br = document.createElement("br");
         document.getElementById("outputPanel").appendChild(br);
-        this.output("mysql>", false);
+        this.output(this.prompt + ">", false);
     },
     escape: function(text) {
         return $('<div />').text(text).html();
