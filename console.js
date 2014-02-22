@@ -24,9 +24,13 @@ Console.prototype = {
         $(window).resize(function(evt) {
             this.onResizeWindow();
         }.bind(this));
+        chrome.app.window.onClosed.addListener(function() {
+            this.disconnect();
+        }.bind(this));
     },
     start: function() {
-        this.output("Welcome to Chrome MySQL Console!", false);
+        var manifest = chrome.runtime.getManifest();
+        this.output("Welcome to " + manifest.name + " " + manifest.version, false);
         this.output("First, connect to DB with the following command:", false);
         this.output("> login [host] [port] [username] [password]", true);
         this.onResizeWindow();
@@ -44,9 +48,51 @@ Console.prototype = {
             this.connect(query);
         } else if (query.match("^logout")) {
             this.disconnect();
+        } else if (query.match("^exit") || query.match("^quit")) {
+            this.quit();
+        } else if (query.match("^about") || query.match("^version")) {
+            this.aboutMe();
+        } else if (query.match("^new")) {
+            this.createNewWindow();
+        } else if (query.match("^help")) {
+            this.help();
         } else {
             this._executeQuery(query);
         }
+    },
+    help: function() {
+        this.output(" ", false);
+        this.output("You can use the following commands provided by this application:", false);
+        this.output("  login: Connect and logged in to MySQL server.", false);
+        this.output("         login [host] [port] [username] [password]", false);
+        this.output("  logout: logged out and disconnect from MySQL server.", false);
+        this.output("  new: Open a new window.", false);
+        this.output("  about, version: Show an information about this application.", false);
+        this.output("  exit, quit: Close this window.", false);
+        this.output("  help: Show this message.", true);
+    },
+    createNewWindow: function() {
+        this.output("Open new console.", true);
+        chrome.runtime.getBackgroundPage(function(backgroundPage) {
+            backgroundPage.createWindow();
+        });
+    },
+    aboutMe: function() {
+        var manifest = chrome.runtime.getManifest();
+        this.output(" ", false);
+        this.output(manifest.name + " " + manifest.version, false);
+        this.output("Copyright (c) Yoichiro Tanaka 2014. All rights reserved.", false);
+        this.output(" ", false);
+        this.output("If you want to know how to use, type the following command:", false);
+        this.output("> help", false);
+        this.output(" ", false);
+        this.output("This software includes the work that is distributed in the Apache License 2.0", false);
+        this.output("  stringencoding(https://code.google.com/p/stringencoding/)", false);
+        this.output("This software includes the work that is distributed in the New BSD License", false);
+        this.output("  CryptoJS(https://code.google.com/p/crypto-js/)", true);
+    },
+    quit: function() {
+        window.close();
     },
     appendQueryToHistory: function(query) {
         chrome.storage.local.get("queryHistory", function(items) {
@@ -56,7 +102,7 @@ Console.prototype = {
             }
             if (queryHistory.indexOf(query) == -1) {
                 queryHistory.push(query);
-                if (queryHistory.length > 30) {
+                if (queryHistory.length > 100) {
                     queryHistory.splice(0, 1);
                 }
             }
@@ -100,20 +146,23 @@ Console.prototype = {
             var port = split[2];
             var username = split[3];
             var password = split[4];
-            mySQLClient.login(host, Number(port), username, password, function(result) {
-                if (result.isSuccess()) {
-                    this.prompt = host + ":" + port;
-                    this.output("Connected.", false);
-                    this.output("If you want to disconnect from DB, then type the following command.", false);
-                    this.output("> logout", true);
-                } else {
-                    this.output("MySQL sent this error: " + result.errorMessage, true);
-                }
-            }.bind(this), function(errorCode) {
-                this.output("Connection failed: " + errorCode, true);
-            }.bind(this), function(result) {
-                this.output("Connection failed: " + result, true);
-            }.bind(this));
+            mySQLClient.login(
+                host, Number(port), username, password,
+                function(initialHandshakeRequest, result) {
+                    if (result.isSuccess()) {
+                        this.prompt = username + "@" + host + ":" + port;
+                        this.output("Connected.", false);
+                        this.output("MySQL Server: Server version " + initialHandshakeRequest.serverVersion + ", Protocol version " + initialHandshakeRequest.protocolVersion);
+                        this.output("If you want to disconnect from DB, then type the following command.", false);
+                        this.output("> logout", true);
+                    } else {
+                        this.output("MySQL sent this error: " + result.errorMessage, true);
+                    }
+                }.bind(this), function(errorCode) {
+                    this.output("Connection failed: " + errorCode, true);
+                }.bind(this), function(result) {
+                    this.output("Connection failed: " + result, true);
+                }.bind(this));
         }
     },
     disconnect: function() {
@@ -147,10 +196,10 @@ Console.prototype = {
             var length = columnDefinitions[i].name.length;
             for (var j = 0; j < resultsetRows.length; j++) {
                 var values = resultsetRows[j].values;
-                if (values[i] != null) {
-                    if (length < values[i].length) {
-                        length = values[i].length;
-                    }
+                var valueLength =
+                        (values[i] != null) ? values[i].length : "NULL".length;
+                if (length < valueLength) {
+                    length = valueLength;
                 }
             }
             columnLengths.push(length);

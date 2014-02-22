@@ -76,7 +76,7 @@ MySQLClient.prototype = {
                 handshakeResponsePacket, function(writeInfo) {
                 mySQLCommunication.readPacket(function(packet) {
                     var result = mySQLProtocol.parseOkErrResultPacket(packet);
-                    callback(result);
+                    callback(initialHandshakeRequest, result);
                 }.bind(this), fatalCallback);
             }.bind(this), fatalCallback);
         }.bind(this), fatalCallback);

@@ -22,16 +22,16 @@ Packet.prototype = {
 };
 
 var InitialHandshakeRequest = function(protocolVersion,
-                                      serverVersion,
-                                      connectionId,
-                                      authPluginDataPart1,
-                                      capabilityFlag1,
-                                      characterSet,
-                                      statusFlags,
-                                      capabilityFlag2,
-                                      authPluginDataLen,
-                                      authPluginDataPart2,
-                                      authPluginName) {
+                                       serverVersion,
+                                       connectionId,
+                                       authPluginDataPart1,
+                                       capabilityFlag1,
+                                       characterSet,
+                                       statusFlags,
+                                       capabilityFlag2,
+                                       authPluginDataLen,
+                                       authPluginDataPart2,
+                                       authPluginName) {
     this.constructor(protocolVersion,
                      serverVersion,
                      connectionId,

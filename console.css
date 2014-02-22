@@ -28,10 +28,14 @@ html, body {
     width: 100%;
     height: 35px;
     position: relative;
+    background-color: white;
 }
 
 .inputPanel #query {
-    font-size: 18px;
+    font-size: 16px;
     width: 99vw;
+    border: 0;
+    outline: none;
+    margin-left: 5px;
     font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
