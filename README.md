@@ -1,7 +1,7 @@
-MySQL Console
-=============
+Chrome MySQL Console
+====================
 
-This software provides you "MySQL Console". This MySQL Console talks the MySQL Client/Server protocol, therefore this application can connect to MySQL server directly, and you don't need to install other applications.
+This software provides your Chrome "MySQL Console" as Chrome Apps. This MySQL Console talks the MySQL Client/Server protocol, therefore this application can connect to MySQL server directly, and you don't need to install other applications.
 
 Copyright
 ---------
@@ -33,3 +33,6 @@ This software includes the work that is distributed in the Apache License 2.0
 
 This software includes the work that is distributed in the New BSD License
 * [CryptoJS](https://code.google.com/p/crypto-js/)
+
+This software includes the work that is distributed in the MIT License
+* [jQuery](http://jquery.com/)
