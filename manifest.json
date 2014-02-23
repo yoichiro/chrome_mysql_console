@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "MySQL Console",
     "description": "__MSG_extDescription__",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Yoichiro Tanaka",
     "app": {
         "background": {
@@ -19,6 +19,6 @@
         "16": "icon_16.png",
         "128": "icon_128.png"
     },
-    "offline_enabled": false,
+    "offline_enabled": true,
     "default_locale": "en"
 }
