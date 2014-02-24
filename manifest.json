@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
     "name": "MySQL Console",
-    "description": "__MSG_extDescription__",
-    "version": "1.1.0",
+    "description": "This application provides you 'MySQL Console' shell windows.",
+    "version": "1.1.1",
     "author": "Yoichiro Tanaka",
     "app": {
         "background": {
@@ -19,6 +19,5 @@
         "16": "icon_16.png",
         "128": "icon_128.png"
     },
-    "offline_enabled": true,
-    "default_locale": "en"
+    "offline_enabled": true
 }
