@@ -122,11 +122,18 @@ Console.prototype = {
             if (!queryHistory) {
                 queryHistory = new Array();
             }
-            if (queryHistory.indexOf(query) == -1) {
+            var pos = queryHistory.indexOf(query);
+            if (pos == -1) {
                 queryHistory.push(query);
                 if (queryHistory.length > 100) {
                     queryHistory.splice(0, 1);
                 }
+            } else {
+                var newQueryHistory = queryHistory.filter(function(v, i) {
+                    return v !== query;
+                });
+                newQueryHistory.push(query);
+                queryHistory = newQueryHistory;
             }
             chrome.storage.local.set({queryHistory: queryHistory}, function() {
                 this.historyPos = 0;
