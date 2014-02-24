@@ -76,6 +76,21 @@ MySQLClient.prototype = {
             }.bind(this), fatalCallback);
         }.bind(this), fatalCallback);
     },
+    getStatistics: function(callback, fatalCallback) {
+        if (!mySQLCommunication.isConnected()) {
+            fatalCallback("Not connected.");
+            return;
+        }
+        mySQLCommunication.resetSequenceNumber();
+        var statisticsRequest = mySQLProtocol.generateStatisticsRequest();
+        var statisticsPacket = mySQLCommunication.createPacket(statisticsRequest);
+        mySQLCommunication.writePacket(statisticsPacket, function(writeInfo) {
+            mySQLCommunication.readPacket(function(packet) {
+                var statistics = mySQLProtocol.parseStatisticsResultPacket(packet);
+                callback(statistics);
+            }.bind(this), fatalCallback);
+        }.bind(this), fatalCallback);
+    },
     _handshake: function(username, password, callback, fatalCallback) {
         mySQLCommunication.readPacket(function(packet) {
             var initialHandshakeRequest =

@@ -20,6 +20,12 @@ var MySQLProtocol = function() {
 };
 
 MySQLProtocol.prototype = {
+    generateStatisticsRequest: function() {
+        var buffer = new ArrayBuffer(1);
+        var array = new Uint8Array(buffer);
+        array[0] = 0x09;
+        return array;
+    },
     generateQueryRequest: function(queryString) {
         var buffer = binaryUtils.stringToArrayBuffer(queryString);
         var view = new Uint8Array(buffer);
@@ -263,6 +269,12 @@ MySQLProtocol.prototype = {
             offset = valueResult.nextPosition;
         }
         return new ResultsetRow(values);
+    },
+    parseStatisticsResultPacket: function(packet) {
+        var data = packet.data;
+        var dataLength = packet.dataLength;
+        var result = mySQLTypes.getAsciiFixedLengthString(data, 0, dataLength);
+        return result;
     }
 };
 

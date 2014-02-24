@@ -72,6 +72,8 @@ Console.prototype = {
             this.createNewWindow();
         } else if (query.match("^help")) {
             this.help();
+        } else if (query.match("^statistics")) {
+            this.statistics();
         } else {
             this._executeQuery(query);
         }
@@ -84,6 +86,7 @@ Console.prototype = {
         this.output("  logout: logged out and disconnect from MySQL server.", false);
         this.output("  new: Open a new window.", false);
         this.output("  about, version: Show an information about this application.", false);
+        this.output("  statistics: Show a statistics regarding connected server.", false);
         this.output("  exit, quit: Close this window.", false);
         this.output("  help: Show this message.", true);
     },
@@ -188,6 +191,14 @@ Console.prototype = {
         mySQLClient.logout(function(result) {
             this.prompt = "mysql";
             this.output("Disconnected.", true);
+        }.bind(this));
+    },
+    statistics: function() {
+        mySQLClient.getStatistics(function(result) {
+            this.output(result, true);
+        }.bind(this), function(result) {
+            console.log(result);
+            this.output("Error: Retrieving statistics failed: " + result, true);
         }.bind(this));
     },
     _executeQuery: function(query) {
