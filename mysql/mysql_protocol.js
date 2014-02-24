@@ -20,6 +20,12 @@ var MySQLProtocol = function() {
 };
 
 MySQLProtocol.prototype = {
+    generateStatisticsRequest: function() {
+        var buffer = new ArrayBuffer(1);
+        var array = new Uint8Array(buffer);
+        array[0] = 0x09;
+        return array;
+    },
     generateQueryRequest: function(queryString) {
         var buffer = binaryUtils.stringToArrayBuffer(queryString);
         var view = new Uint8Array(buffer);
@@ -151,7 +157,7 @@ MySQLProtocol.prototype = {
         var info = "";
         if (dataLength > lastInsertIdResult.nextPosition + 4) {
             var length = dataLength - lastInsertIdResult.nextPosition + 4;
-            info = mySQLTypes.getAsciiFixedLengthString(
+            info = mySQLTypes.getFixedLengthString(
                 data, lastInsertIdResult.nextPosition + 4, length);
         }
         return new OkResult(
@@ -159,11 +165,11 @@ MySQLProtocol.prototype = {
     },
     createErrResult: function(data, offset, dataLength) {
         var errorCode = mySQLTypes.getFixedLengthInteger(data, offset, 2);
-        var sqlStateMarker = mySQLTypes.getAsciiFixedLengthString(data, offset + 2, 1);
-        var sqlState = mySQLTypes.getAsciiFixedLengthString(data, offset + 3, 5);
+        var sqlStateMarker = mySQLTypes.getFixedLengthString(data, offset + 2, 1);
+        var sqlState = mySQLTypes.getFixedLengthString(data, offset + 3, 5);
         var errorMessageLength = dataLength - offset - 8;
         var errorMessage =
-                mySQLTypes.getAsciiFixedLengthString(
+                mySQLTypes.getFixedLengthString(
                     data, offset + 8, errorMessageLength);
         return new ErrResult(errorCode, sqlStateMarker, sqlState, errorMessage);
     },
@@ -183,7 +189,7 @@ MySQLProtocol.prototype = {
         var data = packet.data;
         var offset = 0;
         var protocolVersion = mySQLTypes.getFixedLengthInteger(data, offset++, 1);
-        var serverVersionResult = mySQLTypes.getAsciiNullEndString(data, offset);
+        var serverVersionResult = mySQLTypes.getNullEndString(data, offset);
         var serverVersion = serverVersionResult.result;
         offset = serverVersionResult.nextPosition;
         var connectionId = mySQLTypes.getFixedLengthInteger(data, offset, 4);
@@ -201,7 +207,7 @@ MySQLProtocol.prototype = {
         offset += 10; // Skip 10 bytes
         var authPluginDataPart2 = new Uint8Array(data, offset, 12);
         offset += 12 + 1; // Skip 1 byte
-        var authPluginNameResult = mySQLTypes.getAsciiNullEndString(data, offset);
+        var authPluginNameResult = mySQLTypes.getNullEndString(data, offset);
         var authPluginName = authPluginNameResult.result;
         return new InitialHandshakeRequest(protocolVersion,
                                            serverVersion,
@@ -217,16 +223,16 @@ MySQLProtocol.prototype = {
     },
     parseColumnDefinitionPacket: function(packet) {
         var data = packet.data;
-        var catalogResult = mySQLTypes.getAsciiLengthEncodedString(data, 0);
-        var schemaResult = mySQLTypes.getAsciiLengthEncodedString(
+        var catalogResult = mySQLTypes.getLengthEncodedString(data, 0);
+        var schemaResult = mySQLTypes.getLengthEncodedString(
             data, catalogResult.nextPosition);
-        var tableResult = mySQLTypes.getAsciiLengthEncodedString(
+        var tableResult = mySQLTypes.getLengthEncodedString(
             data, schemaResult.nextPosition);
-        var orgTableResult = mySQLTypes.getAsciiLengthEncodedString(
+        var orgTableResult = mySQLTypes.getLengthEncodedString(
             data, tableResult.nextPosition);
-        var nameResult = mySQLTypes.getAsciiLengthEncodedString(
+        var nameResult = mySQLTypes.getLengthEncodedString(
             data, orgTableResult.nextPosition);
-        var orgNameResult = mySQLTypes.getAsciiLengthEncodedString(
+        var orgNameResult = mySQLTypes.getLengthEncodedString(
             data, nameResult.nextPosition);
         var nextLengthResult = mySQLTypes.getLengthEncodedInteger(
             data, orgNameResult.nextPosition);
@@ -258,11 +264,17 @@ MySQLProtocol.prototype = {
         var offset = 0;
         var values = new Array();
         while(offset < packet.dataLength) {
-            var valueResult = mySQLTypes.getAsciiLengthEncodedString(data, offset);
+            var valueResult = mySQLTypes.getLengthEncodedString(data, offset);
             values.push(valueResult.result);
             offset = valueResult.nextPosition;
         }
         return new ResultsetRow(values);
+    },
+    parseStatisticsResultPacket: function(packet) {
+        var data = packet.data;
+        var dataLength = packet.dataLength;
+        var result = mySQLTypes.getFixedLengthString(data, 0, dataLength);
+        return result;
     }
 };
 

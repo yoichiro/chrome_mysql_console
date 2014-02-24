@@ -93,7 +93,7 @@ MySQLTypes.prototype = {
         var buffer = binaryUtils.stringToArrayBuffer(value);
         return this.createNullEndValue(buffer);
     },
-    getAsciiNullEndString: function(buffer, offset) {
+    getNullEndString: function(buffer, offset) {
         var view = new Uint8Array(buffer);
         for (var pos = offset; pos < view.length; pos++) {
             if (view[pos] == 0) {
@@ -104,18 +104,18 @@ MySQLTypes.prototype = {
         var result = binaryUtils.arrayBufferToString(targetBuffer.buffer);
         return {result: result, nextPosition: pos + 1};
     },
-    getAsciiFixedLengthString: function(buffer, offset, length) {
+    getFixedLengthString: function(buffer, offset, length) {
         var array = new Uint8Array(buffer);
         var targetBuffer = new Uint8Array(array.subarray(offset, offset + length));
         var result = binaryUtils.arrayBufferToString(targetBuffer.buffer);
         return result;
     },
-    getAsciiLengthEncodedString: function(buffer, offset) {
+    getLengthEncodedString: function(buffer, offset) {
         var lengthResult = this.getLengthEncodedInteger(buffer, offset);
         if (lengthResult.result == null) {
             return {result: null, nextPosition: lengthResult.nextPosition};
         } else {
-            var result = this.getAsciiFixedLengthString(
+            var result = this.getFixedLengthString(
                 buffer, lengthResult.nextPosition, lengthResult.result);
             return {result: result,
                     nextPosition: lengthResult.nextPosition + lengthResult.result};
