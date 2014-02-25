@@ -50,7 +50,24 @@ Console.prototype = {
         this.output("First, connect to DB with the following command:", false);
         this.output("> login [host] [port] [username] [password]", true);
         this.onResizeWindow();
+        this.applyFont();
         $("#query").focus();
+    },
+    applyFont: function() {
+        chrome.storage.local.get(["fontSize", "fontColor", "bgColor"], function(items) {
+            var fontSize = items["fontSize"];
+            if (fontSize) {
+                $("#outputPanel").css("font-size", fontSize);
+            }
+            var fontColor = items["fontColor"];
+            if (fontColor) {
+                $("#outputPanel").css("color", fontColor);
+            }
+            var bgColor = items["bgColor"];
+            if (bgColor) {
+                $("#outputPanel").css("background-color", bgColor);
+            }
+        }.bind(this));
     },
     onResizeWindow: function() {
         $("#outputPanel").height($(window).height() - 35);
@@ -74,8 +91,51 @@ Console.prototype = {
             this.help();
         } else if (query.match("^statistics")) {
             this.statistics();
+        } else if (query.match("set option")) {
+            this.setOption(query);
         } else {
             this._executeQuery(query);
+        }
+    },
+    applyOutputPanelCss: function(css, name, value) {
+        $("#outputPanel").css(css, value);
+        var params = {};
+        params[name] = value;
+        chrome.storage.local.set(params);
+    },
+    setOption: function(query) {
+        var split = query.split(" ");
+        if (split.length == 2) {
+            this.output("Invalid command.", true);
+        } else {
+            var name = split[2];
+            if (name == "font-size") {
+                var fontSize = Number(split[3]);
+                if (fontSize) {
+                    this.applyOutputPanelCss("font-size", "fontSize", fontSize);
+                }
+                this.ready();
+                return;
+            } else if (name == "font-color") {
+                var fontColor = split[3];
+                if (fontColor) {
+                    this.applyOutputPanelCss("color", "fontColor", fontColor);
+                }
+                this.ready();
+                return;
+            } else if (name == "bg-color") {
+                var bgColor = split[3];
+                if (bgColor) {
+                    this.applyOutputPanelCss("background-color", "bgColor", bgColor);
+                }
+                this.ready();
+                return;
+            } else if (name == "reset") {
+                this.applyOutputPanelCss("font-size", "fontSize", 14);
+                this.applyOutputPanelCss("color", "fontColor", "white");
+                this.applyOutputPanelCss("background-color", "bgColor", "black");
+            }
+            this.output("Invalid command.", true);
         }
     },
     help: function() {
@@ -83,11 +143,18 @@ Console.prototype = {
         this.output("You can use the following commands provided by this application:", false);
         this.output("  login: Connect and logged in to MySQL server.", false);
         this.output("         login [host] [port] [username] [password]", false);
-        this.output("  logout: logged out and disconnect from MySQL server.", false);
-        this.output("  new: Open a new window.", false);
-        this.output("  about, version: Show an information about this application.", false);
         this.output("  statistics: Show a statistics regarding connected server.", false);
+        this.output("  logout: logged out and disconnect from MySQL server.", false);
         this.output("  exit, quit: Close this window.", false);
+        this.output(" ", false);
+        this.output("  new: Open a new window.", false);
+        this.output(" ", false);
+        this.output("  set option font-size [pt]: Change font size.", false);
+        this.output("  set option font-color [color]: Change font color.", false);
+        this.output("  set option bg-color [color]: Change background color.", false);
+        this.output("  set option reset: Apply default settings.", false);
+        this.output(" ", false);
+        this.output("  about, version: Show an information about this application.", false);
         this.output("  help: Show this message.", true);
     },
     createNewWindow: function() {
@@ -222,8 +289,6 @@ Console.prototype = {
         }.bind(this));
     },
     outputResultset: function(columnDefinitions, resultsetRows) {
-        console.log(columnDefinitions);
-        console.log(resultsetRows);
         if (resultsetRows.length == 0) {
             this.output("Empty set", true);
             return;
