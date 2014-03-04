@@ -20,6 +20,7 @@ var Console = function() {
 
 Console.prototype = {
     constructor: function() {
+        MySQL.communication.setSocketImpl(new MySQL.ChromeSocket());
         this.prompt = "mysql";
         this.assignEventHandlers();
         this.historyPos = 0;
@@ -242,7 +243,7 @@ Console.prototype = {
             var port = split[2];
             var username = split[3];
             var password = split[4];
-            mySQLClient.login(
+            MySQL.client.login(
                 host, Number(port), username, password,
                 function(initialHandshakeRequest, result) {
                     if (result.isSuccess()) {
@@ -262,13 +263,13 @@ Console.prototype = {
         }
     },
     disconnect: function() {
-        mySQLClient.logout(function(result) {
+        MySQL.client.logout(function(result) {
             this.prompt = "mysql";
             this.output("Disconnected.", true);
         }.bind(this));
     },
     statistics: function() {
-        mySQLClient.getStatistics(function(result) {
+        MySQL.client.getStatistics(function(result) {
             this.output(result, true);
         }.bind(this), function(result) {
             console.log(result);
@@ -276,7 +277,7 @@ Console.prototype = {
         }.bind(this));
     },
     _executeQuery: function(query) {
-        mySQLClient.query(query, function(columnDefinitions, resultsetRows) {
+        MySQL.client.query(query, function(columnDefinitions, resultsetRows) {
             this.outputResultset(columnDefinitions, resultsetRows);
         }.bind(this), function(result) {
             this.output("Query OK, " + result.affectedRows + " rows affected", true);

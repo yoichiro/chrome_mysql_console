@@ -30,6 +30,7 @@ Dependency
 
 This software includes the work that is distributed in the Apache License 2.0
 * [stringencoding](https://code.google.com/p/stringencoding/)
+* [mysql_js_driver](https://github.com/yoichiro/mysql_js_driver)
 
 This software includes the work that is distributed in the New BSD License
 * [CryptoJS](https://code.google.com/p/crypto-js/)
