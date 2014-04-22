@@ -236,13 +236,18 @@ Console.prototype = {
     },
     connect: function(query) {
         var split = query.split(" ");
-        if (split.length != 5) {
+        if (split.length < 4) {
             this.output("Error: Invalid options to connect.", true);
         } else {
             var host = split[1];
             var port = split[2];
             var username = split[3];
-            var password = split[4];
+            var password;
+            if (split.length === 4) {
+                password = null;
+            } else {
+                password = split[4];
+            }
             MySQL.client.login(
                 host, Number(port), username, password,
                 function(initialHandshakeRequest, result) {
