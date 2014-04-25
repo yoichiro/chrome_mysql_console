@@ -20,7 +20,7 @@ var Console = function() {
 
 Console.prototype = {
     constructor: function() {
-        MySQL.communication.setSocketImpl(new MySQL.ChromeSocket());
+        MySQL.communication.setSocketImpl(new MySQL.ChromeSocket2());
         this.prompt = "mysql";
         this.assignEventHandlers();
         this.historyPos = 0;
