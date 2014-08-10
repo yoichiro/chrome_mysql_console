@@ -16,12 +16,13 @@ html, body {
     color: white;
 }
 
-#outputPanel pre {
+#outputPanel p {
     width: 100%;
     word-wrap: break-word;
     font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
     line-height: 1.2;
     margin: 0;
+    white-space: pre;
 }
 
 .inputPanel {
@@ -38,4 +39,8 @@ html, body {
     outline: none;
     margin-left: 5px;
     font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+}
+
+#ca-cert {
+    resize: vertical;
 }

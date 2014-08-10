@@ -14,6 +14,52 @@
  * limitations under the License.
  */
 
+"use strict";
+
+var SSLConfigurationDialog = function(parent) {
+    this.constructor(parent);
+};
+
+SSLConfigurationDialog.prototype = {
+    constructor: function(parent) {
+        this.parent = parent;
+        this.host = null;
+        this.port = null;
+        this.username = null;
+        this.password = null;
+        this.callback = null;
+        this.okClicked = false;
+        this.assignEventHandlers();
+    },
+    assignEventHandlers: function() {
+        $("#sslConfigDialog").on("hidden.bs.modal", function(e) {
+            $("#query").removeAttr("disabled");
+            if (!this.okClicked) {
+                this.parent.output("", true);
+            }
+        }.bind(this));
+        $("#btnConnectWithSSL").on("click", function(e) {
+            this.onClickConnectWithSSLButton();
+        }.bind(this));
+    },
+    show: function(host, port, username, password, callback) {
+        this.okClicked = false;
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.callback = callback;
+        $("#ca-cert").val("");
+        $("#query").attr("disabled","disabled");
+        $("#sslConfigDialog").modal("show");
+    },
+    onClickConnectWithSSLButton: function() {
+        $("#sslConfigDialog").modal("hide");
+        this.okClicked = true;
+        this.callback($("#ca-cert").val());
+    }
+};
+
 var Console = function() {
     this.constructor();
 };
@@ -24,15 +70,16 @@ Console.prototype = {
         this.prompt = "mysql";
         this.assignEventHandlers();
         this.historyPos = 0;
+        this.sslConfigurationDialog = new SSLConfigurationDialog(this);
     },
     assignEventHandlers: function() {
         $("#query").keydown(function(evt) {
-            if (evt.keyCode == 13) {
+            if (evt.keyCode === 13) {
                 this.onEnterQuery();
                 this.historyPos = 0;
-            } else if (evt.keyCode == 38) {
+            } else if (evt.keyCode === 38) {
                 this.showPreviousQuery();
-            } else if (evt.keyCode == 40) {
+            } else if (evt.keyCode === 40) {
                 this.showNextQuery();
             } else {
                 this.historyPos = 0;
@@ -49,22 +96,23 @@ Console.prototype = {
         var manifest = chrome.runtime.getManifest();
         this.output("Welcome to " + manifest.name + " " + manifest.version, false);
         this.output("First, connect to DB with the following command:", false);
-        this.output("> login [host] [port] [username] [password]", true);
+        this.output("> login [host] [port] [username] [password]", false);
+        this.output("> login-ssl [host] [port] [username] [password]", true);
         this.onResizeWindow();
         this.applyFont();
         $("#query").focus();
     },
     applyFont: function() {
         chrome.storage.local.get(["fontSize", "fontColor", "bgColor"], function(items) {
-            var fontSize = items["fontSize"];
+            var fontSize = items.fontSize;
             if (fontSize) {
                 $("#outputPanel").css("font-size", fontSize);
             }
-            var fontColor = items["fontColor"];
+            var fontColor = items.fontColor;
             if (fontColor) {
                 $("#outputPanel").css("color", fontColor);
             }
-            var bgColor = items["bgColor"];
+            var bgColor = items.bgColor;
             if (bgColor) {
                 $("#outputPanel").css("background-color", bgColor);
             }
@@ -106,32 +154,32 @@ Console.prototype = {
     },
     setOption: function(query) {
         var split = query.split(" ");
-        if (split.length == 2) {
+        if (split.length === 2) {
             this.output("Invalid command.", true);
         } else {
             var name = split[2];
-            if (name == "font-size") {
+            if (name === "font-size") {
                 var fontSize = Number(split[3]);
                 if (fontSize) {
                     this.applyOutputPanelCss("font-size", "fontSize", fontSize);
                 }
                 this.ready();
                 return;
-            } else if (name == "font-color") {
+            } else if (name === "font-color") {
                 var fontColor = split[3];
                 if (fontColor) {
                     this.applyOutputPanelCss("color", "fontColor", fontColor);
                 }
                 this.ready();
                 return;
-            } else if (name == "bg-color") {
+            } else if (name === "bg-color") {
                 var bgColor = split[3];
                 if (bgColor) {
                     this.applyOutputPanelCss("background-color", "bgColor", bgColor);
                 }
                 this.ready();
                 return;
-            } else if (name == "reset") {
+            } else if (name === "reset") {
                 this.applyOutputPanelCss("font-size", "fontSize", 14);
                 this.applyOutputPanelCss("color", "fontColor", "white");
                 this.applyOutputPanelCss("background-color", "bgColor", "black");
@@ -144,6 +192,8 @@ Console.prototype = {
         this.output("You can use the following commands provided by this application:", false);
         this.output("  login: Connect and logged in to MySQL server.", false);
         this.output("         login [host] [port] [username] [password]", false);
+        this.output("  login-ssl: Connect and logged in to MySQL server with TLS.", false);
+        this.output("         login-ssl [host] [port] [username] [password]", false);
         this.output("  statistics: Show a statistics regarding connected server.", false);
         this.output("  logout: logged out and disconnect from MySQL server.", false);
         this.output("  exit, quit: Close this window.", false);
@@ -186,12 +236,12 @@ Console.prototype = {
     },
     appendQueryToHistory: function(query) {
         chrome.storage.local.get("queryHistory", function(items) {
-            var queryHistory = items["queryHistory"];
+            var queryHistory = items.queryHistory;
             if (!queryHistory) {
-                queryHistory = new Array();
+                queryHistory = [];
             }
             var pos = queryHistory.indexOf(query);
-            if (pos == -1) {
+            if (pos === -1) {
                 queryHistory.push(query);
                 if (queryHistory.length > 100) {
                     queryHistory.splice(0, 1);
@@ -210,7 +260,7 @@ Console.prototype = {
     },
     showPreviousQuery: function() {
         chrome.storage.local.get("queryHistory", function(items) {
-            var queryHistory = items["queryHistory"];
+            var queryHistory = items.queryHistory;
             if (queryHistory) {
                 if (this.historyPos + 1 <= queryHistory.length) {
                     this.historyPos += 1;
@@ -223,7 +273,7 @@ Console.prototype = {
     },
     showNextQuery: function() {
         chrome.storage.local.get("queryHistory", function(items) {
-            var queryHistory = items["queryHistory"];
+            var queryHistory = items.queryHistory;
             if (queryHistory) {
                 if (this.historyPos > 0) {
                     this.historyPos -= 1;
@@ -234,11 +284,28 @@ Console.prototype = {
             }
         }.bind(this));
     },
+    handleInitialHandshakeRequest: function(username, host, port, ssl) {
+        return function(initialHandshakeRequest, result) {
+            if (result.isSuccess()) {
+                this.prompt = username + "@" + host + ":" + port;
+                if (ssl) {
+                    this.prompt += "(TLS)";
+                }
+                this.output("Connected.", false);
+                this.output("MySQL Server: Server version " + initialHandshakeRequest.serverVersion + ", Protocol version " + initialHandshakeRequest.protocolVersion);
+                this.output("If you want to disconnect from DB, then type the following command.", false);
+                this.output("> logout", true);
+            } else {
+                this.output("MySQL sent this error: " + result.errorMessage, true);
+            }
+        }.bind(this);
+    },
     connect: function(query) {
         var split = query.split(" ");
         if (split.length < 4) {
             this.output("Error: Invalid options to connect.", true);
         } else {
+            var cmd = split[0];
             var host = split[1];
             var port = split[2];
             var username = split[3];
@@ -248,23 +315,27 @@ Console.prototype = {
             } else {
                 password = split[4];
             }
-            MySQL.client.login(
-                host, Number(port), username, password,
-                function(initialHandshakeRequest, result) {
-                    if (result.isSuccess()) {
-                        this.prompt = username + "@" + host + ":" + port;
-                        this.output("Connected.", false);
-                        this.output("MySQL Server: Server version " + initialHandshakeRequest.serverVersion + ", Protocol version " + initialHandshakeRequest.protocolVersion);
-                        this.output("If you want to disconnect from DB, then type the following command.", false);
-                        this.output("> logout", true);
-                    } else {
-                        this.output("MySQL sent this error: " + result.errorMessage, true);
-                    }
-                }.bind(this), function(errorCode) {
-                    this.output("Connection failed: " + errorCode, true);
-                }.bind(this), function(result) {
-                    this.output("Connection failed: " + result, true);
+            if (cmd === "login") {
+                MySQL.client.login(
+                    host, Number(port), username, password,
+                    this.handleInitialHandshakeRequest(username, host, port, false),
+                    function(errorCode) {
+                        this.output("Connection failed: " + errorCode, true);
+                    }.bind(this), function(result) {
+                        this.output("Connection failed: " + result, true);
+                    }.bind(this));
+            } else if (cmd === "login-ssl") {
+                this.sslConfigurationDialog.show(host, port, username, password, function(ca) {
+                    MySQL.client.loginWithSSL(
+                        host, Number(port), username, password, ca,
+                        this.handleInitialHandshakeRequest(username, host, port, true),
+                        function(errorCode) {
+                            this.output("Connection failed: " + errorCode, true);
+                        }.bind(this), function(result) {
+                            this.output("Connection failed: " + result, true);
+                        }.bind(this));
                 }.bind(this));
+            }
         }
     },
     disconnect: function() {
@@ -295,17 +366,19 @@ Console.prototype = {
         }.bind(this));
     },
     outputResultset: function(columnDefinitions, resultsetRows) {
-        if (resultsetRows.length == 0) {
+        if (resultsetRows.length === 0) {
             this.output("Empty set", true);
             return;
         }
-        var columnLengths = new Array();
-        for (var i = 0; i < columnDefinitions.length; i++) {
+        var columnLengths = [];
+        var valueLength;
+        var i, j;
+        for (i = 0; i < columnDefinitions.length; i++) {
             var length = columnDefinitions[i].name.length;
-            for (var j = 0; j < resultsetRows.length; j++) {
+            for (j = 0; j < resultsetRows.length; j++) {
                 var values = resultsetRows[j].values;
-                var valueLength =
-                        (values[i] != null) ? values[i].length : "NULL".length;
+                valueLength =
+                        (values[i] !== null) ? values[i].length : "NULL".length;
                 if (length < valueLength) {
                     length = valueLength;
                 }
@@ -335,12 +408,12 @@ Console.prototype = {
             row = "|";
             for (j = 0; j < resultsetRows[i].values.length; j++) {
                 var value = resultsetRows[i].values[j];
-                if (value == null) {
+                if (value === null) {
                     value = "NULL";
                 }
                 row += " " + value;
-                var valueLength = 0;
-                if (value != null) {
+                valueLength = 0;
+                if (value !== null) {
                     valueLength = value.length;
                 }
                 for (var k = 0; k < columnLengths[j] - valueLength; k++) {
@@ -354,10 +427,10 @@ Console.prototype = {
         this.output(resultsetRows.length + " rows in set", true);
     },
     output: function(text, outputReady) {
-        var pre = document.createElement("pre");
-        pre.appendChild(document.createTextNode(text));
-        document.getElementById("outputPanel").appendChild(pre);
-        pre.scrollIntoView(false);
+        var p = document.createElement("p");
+        p.appendChild(document.createTextNode(text));
+        document.getElementById("outputPanel").appendChild(p);
+        p.scrollIntoView(false);
         if (outputReady) {
             this.ready();
         }
@@ -366,6 +439,7 @@ Console.prototype = {
         var br = document.createElement("br");
         document.getElementById("outputPanel").appendChild(br);
         this.output(this.prompt + ">", false);
+        $("#query").focus();
     },
     escape: function(text) {
         return $('<div />').text(text).html();

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <script type="text/javascript" src="lib/encoding-indexes.js"></script>
+  <script type="text/javascript" src="lib/encoding.js"></script>
+  <script type="text/javascript" src="lib/sha1.js"></script>
+  <script type="text/javascript" src="lib/jquery-2.1.0.min.js"></script>
+  <script type="text/javascript" src="lib/forge.min.js"></script>
+  <script type="text/javascript" src="lib/bootstrap.min.js"></script>
+
+  <script type="text/javascript" src="mysql/mysql.js"></script>
+  <script type="text/javascript" src="mysql/network_error_code.js"></script>
+  <script type="text/javascript" src="mysql/hasher.js"></script>
+  <script type="text/javascript" src="mysql/binary_utils.js"></script>
+  <script type="text/javascript" src="mysql/mysql_types.js"></script>
+  <script type="text/javascript" src="mysql/mysql_models.js"></script>
+  <script type="text/javascript" src="mysql/mysql_protocol.js"></script>
+  <script type="text/javascript" src="mysql/mysql_communication.js"></script>
+  <script type="text/javascript" src="mysql/mysql_client.js"></script>
+  <script type="text/javascript" src="mysql/chrome_socket_2.js"></script>
+
+  <script type="text/javascript" src="console.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="lib/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="console.css" />
+
+  <!-- @if DEBUG -->
+  <script type="text/javascript" src="chromereload.js"></script>
+  <!-- @endif -->
+
+</head>
+
+<body>
+
+<div id="outputPanel">
+</div>
+<div class="inputPanel">
+  <input type="text" id="query" value="" placeholder="Please input command or query ('help' for more information)." />
+</div>
+
+<div id="sslConfigDialog" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">SSL configuration</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label for="ca-cert" class="col-sm-3 control-label">CA certificate<br />in PEM format<br />(Optional)</label>
+            <div class="col-sm-9">
+              <textarea id="ca-cert" class="form-control"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btnConnectWithSSL">Connect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+
+</html>
