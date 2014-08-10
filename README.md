@@ -34,6 +34,7 @@ This software includes the work that is distributed in the Apache License 2.0
 
 This software includes the work that is distributed in the New BSD License
 * [CryptoJS](https://code.google.com/p/crypto-js/)
+* [Forge](https://github.com/digitalbazaar/forge)
 
 This software includes the work that is distributed in the MIT License
 * [jQuery](http://jquery.com/)
