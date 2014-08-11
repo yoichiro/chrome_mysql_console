@@ -321,8 +321,10 @@ Console.prototype = {
                     this.handleInitialHandshakeRequest(username, host, port, false),
                     function(errorCode) {
                         this.output("Connection failed: " + errorCode, true);
+                        this.disconnect();
                     }.bind(this), function(result) {
                         this.output("Connection failed: " + result, true);
+                        this.disconnect();
                     }.bind(this));
             } else if (cmd === "login-ssl") {
                 this.sslConfigurationDialog.show(host, port, username, password, function(ca) {
@@ -331,8 +333,10 @@ Console.prototype = {
                         this.handleInitialHandshakeRequest(username, host, port, true),
                         function(errorCode) {
                             this.output("Connection failed: " + errorCode, true);
+                            this.disconnect();
                         }.bind(this), function(result) {
                             this.output("Connection failed: " + result, true);
+                            this.disconnect();
                         }.bind(this));
                 }.bind(this));
             }
