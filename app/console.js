@@ -50,13 +50,14 @@ SSLConfigurationDialog.prototype = {
         this.password = password;
         this.callback = callback;
         $("#ca-cert").val("");
+        $("#check-cn").attr("checked", false);
         $("#query").attr("disabled","disabled");
         $("#sslConfigDialog").modal("show");
     },
     onClickConnectWithSSLButton: function() {
         $("#sslConfigDialog").modal("hide");
         this.okClicked = true;
-        this.callback($("#ca-cert").val());
+        this.callback($("#ca-cert").val(), $("#check-cn:checked").val());
     }
 };
 
@@ -327,9 +328,9 @@ Console.prototype = {
                         this.disconnect();
                     }.bind(this));
             } else if (cmd === "login-ssl") {
-                this.sslConfigurationDialog.show(host, port, username, password, function(ca) {
+                this.sslConfigurationDialog.show(host, port, username, password, function(ca, checkCommonName) {
                     MySQL.client.loginWithSSL(
-                        host, Number(port), username, password, ca,
+                        host, Number(port), username, password, ca, checkCommonName,
                         this.handleInitialHandshakeRequest(username, host, port, true),
                         function(errorCode) {
                             this.output("Connection failed: " + errorCode, true);
