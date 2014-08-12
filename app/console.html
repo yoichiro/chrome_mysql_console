@@ -50,9 +50,15 @@
       <div class="modal-body">
         <form class="form-horizontal">
           <div class="form-group">
-            <label for="ca-cert" class="col-sm-3 control-label">CA certificate<br />in PEM format<br />(Optional)</label>
-            <div class="col-sm-9">
+            <label for="ca-cert" class="col-sm-4 control-label">CA certificate<br />in PEM format</label>
+            <div class="col-sm-8">
               <textarea id="ca-cert" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="check-cn" class="col-sm-4 control-label">Check common name</label>
+            <div class="col-sm-8">
+              <input id="check-cn" type="checkbox" ng-model="checkCommonName" />
             </div>
           </div>
         </form>
