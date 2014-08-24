@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "MySQL Console",
     "description": "This application provides you 'MySQL Console' shell windows.",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "author": "Yoichiro Tanaka",
     "app": {
         "background": {
