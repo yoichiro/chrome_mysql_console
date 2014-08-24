@@ -20,6 +20,7 @@
   <script type="text/javascript" src="mysql/mysql_communication.js"></script>
   <script type="text/javascript" src="mysql/mysql_client.js"></script>
   <script type="text/javascript" src="mysql/chrome_socket_2.js"></script>
+  <script type="text/javascript" src="mysql/query_divider.js"></script>
 
   <script type="text/javascript" src="console.js"></script>
 
@@ -37,7 +38,7 @@
 <div id="outputPanel">
 </div>
 <div class="inputPanel">
-  <input type="text" id="query" value="" placeholder="Please input command or query ('help' for more information)." />
+  <textarea id="query" placeholder="Please input command or query, then push Ctrl+Enter or Command+Enter key to execute it. ('help' for more information)."></textarea>
 </div>
 
 <div id="sslConfigDialog" class="modal fade">
