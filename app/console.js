@@ -75,12 +75,13 @@ Console.prototype = {
     },
     assignEventHandlers: function() {
         $("#query").keydown(function(evt) {
-            if (evt.keyCode === 13) {
+            if ((evt.ctrlKey || evt.metaKey) && evt.keyCode === 13) {
                 this.onEnterQuery();
                 this.historyPos = 0;
-            } else if (evt.keyCode === 38) {
+                evt.preventDefault();
+            } else if ((evt.ctrlKey || evt.metaKey) && evt.keyCode === 38) {
                 this.showPreviousQuery();
-            } else if (evt.keyCode === 40) {
+            } else if ((evt.ctrlKey || evt.metaKey) && evt.keyCode === 40) {
                 this.showNextQuery();
             } else {
                 this.historyPos = 0;
@@ -120,31 +121,38 @@ Console.prototype = {
         }.bind(this));
     },
     onResizeWindow: function() {
-        $("#outputPanel").height($(window).height() - 35);
+        $("#outputPanel").height($(window).height() - 100);
     },
     onEnterQuery: function() {
         var query = $("#query").val();
         $("#query").val("");
-        this.output(query);
         this.appendQueryToHistory(query);
         if (query.match("^login")) {
+            this.output(query);
             this.connect(query);
         } else if (query.match("^logout")) {
+            this.output(query);
             this.disconnect();
         } else if (query.match("^exit") || query.match("^quit")) {
+            this.output(query);
             this.quit();
         } else if (query.match("^about") || query.match("^version")) {
+            this.output(query);
             this.aboutMe();
         } else if (query.match("^new")) {
+            this.output(query);
             this.createNewWindow();
         } else if (query.match("^help")) {
+            this.output(query);
             this.help();
         } else if (query.match("^statistics")) {
+            this.output(query);
             this.statistics();
         } else if (query.match("set option")) {
+            this.output(query);
             this.setOption(query);
         } else {
-            this._executeQuery(query);
+            this._executeQueries(query);
         }
     },
     applyOutputPanelCss: function(css, name, value) {
@@ -318,7 +326,7 @@ Console.prototype = {
             }
             if (cmd === "login") {
                 MySQL.client.login(
-                    host, Number(port), username, password,
+                    host, Number(port), username, password, false,
                     this.handleInitialHandshakeRequest(username, host, port, false),
                     function(errorCode) {
                         this.output("Connection failed: " + errorCode, true);
@@ -330,7 +338,7 @@ Console.prototype = {
             } else if (cmd === "login-ssl") {
                 this.sslConfigurationDialog.show(host, port, username, password, function(ca, checkCommonName) {
                     MySQL.client.loginWithSSL(
-                        host, Number(port), username, password, ca, checkCommonName,
+                        host, Number(port), username, password, false, ca, checkCommonName,
                         this.handleInitialHandshakeRequest(username, host, port, true),
                         function(errorCode) {
                             this.output("Connection failed: " + errorCode, true);
@@ -357,18 +365,52 @@ Console.prototype = {
             this.output("Error: Retrieving statistics failed: " + result, true);
         }.bind(this));
     },
-    _executeQuery: function(query) {
-        MySQL.client.query(query, function(columnDefinitions, resultsetRows) {
-            this.outputResultset(columnDefinitions, resultsetRows);
-        }.bind(this), function(result) {
-            this.output("Query OK, " + result.affectedRows + " rows affected", true);
-        }.bind(this), function(result) {
-            console.log(result);
-            this.output("Error: Query execution failed: " + result.errorMessage, true);
-        }.bind(this), function(result) {
-            console.log(result);
-            this.output("Error: Query execution failed: " + result, true);
-        }.bind(this));
+    _executeQueries: function(query) {
+        var divided = new MySQL.QueryDivider().parse(query);
+        if (divided.success) {
+            var queries = divided.result;
+            this._executeQuery(queries);
+        } else {
+            this.output("Parse error: " + divided.error.message, true);
+        }
+    },
+    _executeQuery: function(queries) {
+        if (queries && queries.length > 0) {
+            var query = queries.shift();
+            this.output(query);
+            MySQL.client.query(query, function(columnDefinitions, resultsetRows, eofResult) {
+                this.outputResultset(columnDefinitions, resultsetRows);
+                this._getNextQueryResult(eofResult, queries);
+            }.bind(this), function(result) {
+                this.output("Query OK, " + result.affectedRows + " rows affected", true);
+                this._getNextQueryResult(result, queries);
+            }.bind(this), function(result) {
+                console.log(result);
+                this.output("Error: Query execution failed: " + result.errorMessage, true);
+            }.bind(this), function(result) {
+                console.log(result);
+                this.output("Error: Query execution failed: " + result, true);
+            }.bind(this));
+        }
+    },
+    _getNextQueryResult: function(result, queries) {
+        if (!result.isMoreResultsExists()) {
+            this._executeQuery(queries);
+        } else {
+            MySQL.client.getNextQueryResult(function(columnDefinitions, resultsetRows, eofResult) {
+                this.outputResultset(columnDefinitions, resultsetRows);
+                this._getNextQueryResult(eofResult, queries);
+            }.bind(this), function(result) {
+                this.output("Query OK, " + result.affectedRows + " rows affected", true);
+                this._getNextQueryResult(result, queries);
+            }.bind(this), function(result) {
+                console.log(result);
+                this.output("Error: Query execution failed: " + result.errorMessage, true);
+            }.bind(this), function(result) {
+                console.log(result);
+                this.output("Error: Query execution failed: " + result, true);
+            }.bind(this));
+        }
     },
     outputResultset: function(columnDefinitions, resultsetRows) {
         if (resultsetRows.length === 0) {
