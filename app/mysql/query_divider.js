@@ -64,7 +64,7 @@
     };
 
     var _trim = function(str) {
-	    return str.replace(/^[ 　\t\r\n]+|[ 　\t\r\n]+$/g, "");
+        return str.replace(/^[ 　\t\r\n]+|[ 　\t\r\n]+$/g, "");
     };
 
     // Public methods
@@ -73,6 +73,7 @@
         try {
             this.evaluate(query, 0);
             _appendBufferToResult.call(this);
+            this.result[this.result.length - 1] += this.maybeDelimiterDefBuffer.join("");
             return {
                 success: true,
                 result: this.result
@@ -111,9 +112,8 @@
             this.maybeDelimiterDefCount = 0;
             return 1;
         } else {
-            this.buffer.push(ch);
             this.currentState = this.stateMap.query;
-            return 1;
+            return 0;
         }
     };
 
@@ -269,6 +269,7 @@
             if ((this.maybeDelimiterDefCount + 1) === DELIMITER.length) {
                 this.currentState = this.stateMap.delimiterDef;
                 this.delimiterDefCandidate = [];
+                this.maybeDelimiterDefBuffer = [];
                 return 1;
             } else {
                 this.maybeDelimiterDefBuffer.push(ch);
@@ -340,6 +341,10 @@
             this.skipDelimiterCheck = true;
             return this.maybeDelimiterCount * -1;
         }
+    };
+
+    QueryDivider.prototype.setDebug = function(debug) {
+        DEBUG = debug;
     };
 
     // Export
