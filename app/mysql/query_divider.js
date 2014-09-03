@@ -73,7 +73,9 @@
         try {
             this.evaluate(query);
             _appendBufferToResult.call(this);
+console.log(this.result);
             this.result[this.result.length - 1] += this.maybeDelimiterDefBuffer.join("");
+console.log(this.result);
             return {
                 success: true,
                 result: this.result
@@ -278,6 +280,7 @@
         } else {
             this.buffer = this.buffer.concat(this.maybeDelimiterDefBuffer);
             this.buffer.push(ch);
+            this.maybeDelimiterDefBuffer = [];
             this.currentState = this.stateMap.query;
             return 1;
         }
