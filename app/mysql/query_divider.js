@@ -73,9 +73,7 @@
         try {
             this.evaluate(query);
             _appendBufferToResult.call(this);
-console.log(this.result);
             this.result[this.result.length - 1] += this.maybeDelimiterDefBuffer.join("");
-console.log(this.result);
             return {
                 success: true,
                 result: this.result
