@@ -67,8 +67,10 @@ var Console = function() {
 
 Console.prototype = {
     constructor: function() {
-        MySQL.communication.setSocketImpl(new MySQL.ChromeSocket2());
+        this.mySQLClient = new MySQL.Client();
+        this.mySQLClient.setSocketImpl(new MySQL.ChromeSocket2());
         this.prompt = "mysql";
+        this.setTitle(this.prompt);
         this.assignEventHandlers();
         this.historyPos = 0;
         this.sslConfigurationDialog = new SSLConfigurationDialog(this);
@@ -300,6 +302,7 @@ Console.prototype = {
                 if (ssl) {
                     this.prompt += "(TLS)";
                 }
+                this.setTitle(this.prompt);
                 this.output("Connected.", false);
                 this.output("MySQL Server: Server version " + initialHandshakeRequest.serverVersion + ", Protocol version " + initialHandshakeRequest.protocolVersion);
                 this.output("If you want to disconnect from DB, then type the following command.", false);
@@ -325,7 +328,7 @@ Console.prototype = {
                 password = split[4];
             }
             if (cmd === "login") {
-                MySQL.client.login(
+                this.mySQLClient.login(
                     host, Number(port), username, password, false,
                     this.handleInitialHandshakeRequest(username, host, port, false),
                     function(errorCode) {
@@ -337,7 +340,7 @@ Console.prototype = {
                     }.bind(this));
             } else if (cmd === "login-ssl") {
                 this.sslConfigurationDialog.show(host, port, username, password, function(ca, checkCommonName) {
-                    MySQL.client.loginWithSSL(
+                    this.mySQLClient.loginWithSSL(
                         host, Number(port), username, password, false, ca, checkCommonName,
                         this.handleInitialHandshakeRequest(username, host, port, true),
                         function(errorCode) {
@@ -352,13 +355,14 @@ Console.prototype = {
         }
     },
     disconnect: function() {
-        MySQL.client.logout(function(result) {
+        this.mySQLClient.logout(function(result) {
             this.prompt = "mysql";
+            this.settitle(this.prompt);
             this.output("Disconnected.", true);
         }.bind(this));
     },
     statistics: function() {
-        MySQL.client.getStatistics(function(result) {
+        this.mySQLClient.getStatistics(function(result) {
             this.output(result, true);
         }.bind(this), function(result) {
             console.log(result);
@@ -378,7 +382,7 @@ Console.prototype = {
         if (queries && queries.length > 0) {
             var query = queries.shift();
             this.output(query);
-            MySQL.client.query(query, function(columnDefinitions, resultsetRows, eofResult) {
+            this.mySQLClient.query(query, function(columnDefinitions, resultsetRows, eofResult) {
                 this.outputResultset(columnDefinitions, resultsetRows);
                 this._getNextQueryResult(eofResult, queries);
             }.bind(this), function(result) {
@@ -397,7 +401,7 @@ Console.prototype = {
         if (!result.isMoreResultsExists()) {
             this._executeQuery(queries);
         } else {
-            MySQL.client.getNextQueryResult(function(columnDefinitions, resultsetRows, eofResult) {
+            this.mySQLClient.getNextQueryResult(function(columnDefinitions, resultsetRows, eofResult) {
                 this.outputResultset(columnDefinitions, resultsetRows);
                 this._getNextQueryResult(eofResult, queries);
             }.bind(this), function(result) {
@@ -490,6 +494,10 @@ Console.prototype = {
     },
     escape: function(text) {
         return $('<div />').text(text).html();
+    },
+    setTitle: function(message) {
+        console.log(message);
+        document.title = message;
     }
 };
 
